@@ -1,0 +1,9 @@
+build/
+.cache/
+*.o
+*.a
+*.so
+*.dylib
+.DS_Store
+*.dSYM/
+CMakeUserPresets.json
