@@ -39,7 +39,7 @@
 // 22. Best Time to Buy and Sell Stock II: Unlimited transactions, max profit.
 // 23. Move Zeroes: Move all 0's to end, in-place, O(1) extra space.
 
-// --- TODO ---
+// --- Strings / Two-Pointer ---
 // 24. Longest Palindromic Substring: Return longest palindromic substring (len ≤ 1000).
 // 25. Merge Intervals: Merge overlapping intervals, return sorted list.
 // 26. Container With Most Water: Max area between two lines.
@@ -62,6 +62,7 @@
 #include <numeric>
 #include <bitset>
 #include <unordered_set>
+#include <unordered_map>
 
 // ============================================================
 // Q12: Lock-Free SPSC Ring Buffer
@@ -673,34 +674,404 @@ void question23() {
 }
 
 // ============================================================
+// Q24: Longest Palindromic Substring (Expand Around Center)
+// ============================================================
+
+void question24() {
+    std::cout << "Enter a string to find its longest palindromic substring:\n";
+    std::string s;
+    std::getline(std::cin >> std::ws, s);  // Read entire line including spaces
+
+    int n = static_cast<int>(s.size());
+    if (n == 0) {
+        std::cout << "Longest palindromic substring: \"\"\n";
+        return;
+    }
+
+    int start = 0, max_len = 1;
+
+    // Helper: expand from center [left, right], return palindrome length
+    auto expand = [&](int left, int right) {
+        while (left >= 0 && right < n && s[left] == s[right]) {
+            int len = right - left + 1;
+            if (len > max_len) {
+                start = left;
+                max_len = len;
+            }
+            --left;
+            ++right;
+        }
+    };
+
+    for (int i = 0; i < n; ++i) {
+        expand(i, i);       // Odd-length palindrome (single center)
+        expand(i, i + 1);   // Even-length palindrome (between two chars)
+    }
+
+    std::cout << "Longest palindromic substring: \"" << s.substr(start, max_len) << "\"\n";
+}
+
+// ============================================================
+// Q24a: Longest Palindromic Substring (Manacher's Algorithm)
+// ============================================================
+// Manacher's algorithm finds the longest palindromic substring in O(n) time
+// by leveraging the symmetry of palindromes to avoid redundant comparisons.
+//
+// Key insight: For a palindrome centered at c, the palindrome at a mirror
+// position i' = 2c - i has the same radius (bounded by the palindrome's edge).
+// This lets us "jump" past already-explored regions.
+//
+// Technique: Transform the string by inserting sentinels (e.g., '#') between
+// characters so both odd and even palindromes are handled uniformly.
+// Example: "abba" -> "^#a#b#b#a#$" (^ and $ are boundary guards)
+//
+// The algorithm maintains:
+// - center: the center of the rightmost palindrome found so far
+// - right:  the right edge of that palindrome
+// - p[i]:   the radius of the palindrome centered at position i
+//
+// For each position i:
+// 1. If i < right, initialize p[i] using its mirror i' = 2*center - i
+//    (p[i] is at least min(p[i'], right - i) by symmetry)
+// 2. Attempt to expand beyond the initial radius
+// 3. If expansion pushes right edge further, update center and right
+//
+// After processing, max(p) gives the longest palindrome radius.
+// The original substring indices are recovered by transforming back.
+//
+// Time: O(n) — each character is compared at most twice
+// Space: O(n) — for the transformed string and radius array
+
+void question24a() {
+    std::cout << "Enter a string to find its longest palindromic substring (Manacher):\n";
+    std::string s;
+    std::getline(std::cin >> std::ws, s);
+
+    if (s.empty()) {
+        std::cout << "Longest palindromic substring: \"\"\n";
+        return;
+    }
+
+    // Transform: insert '#' between chars, wrap with '^' and '$' as sentinels
+    // This makes even-length palindromes behave like odd-length ones
+    // Example: "aba" -> "^#a#b#a#$", palindrome centered at 'b' spans #a#b#a#
+    std::string t = "^";
+    for (char c : s) {
+        t += '#';
+        t += c;
+    }
+    t += '#';
+    t += '$';
+
+    int n = static_cast<int>(t.size());
+    std::vector<int> p(n, 0);  // p[i] = radius of palindrome centered at i
+
+    int center = 0, right = 0;  // Current rightmost palindrome's center and edge
+
+    for (int i = 1; i < n - 1; ++i) {
+        // Mirror position of i with respect to center
+        // i_mirror = center - (i - center) = 2*center - i
+        int i_mirror = 2 * center - i;
+
+        // Case 1: i is within the current rightmost palindrome
+        // By symmetry, p[i] is at least p[i_mirror], but cannot exceed right - i
+        // (the palindrome cannot extend beyond right without verification)
+        if (i < right) {
+            p[i] = std::min(right - i, p[i_mirror]);
+        }
+
+        // Attempt to expand palindrome centered at i beyond known radius
+        // Compare characters at positions (i - p[i] - 1) and (i + p[i] + 1)
+        // The sentinels '^' at index 0 and '$' at index n-1 will terminate expansion
+        while (t[i + p[i] + 1] == t[i - p[i] - 1]) {
+            ++p[i];
+        }
+
+        // If palindrome centered at i extends beyond current right edge,
+        // update center and right to this new rightmost palindrome
+        if (i + p[i] > right) {
+            center = i;
+            right = i + p[i];
+        }
+    }
+
+    // Find the maximum radius and its center position
+    int max_radius = 0, center_idx = 0;
+    for (int i = 1; i < n - 1; ++i) {
+        if (p[i] > max_radius) {
+            max_radius = p[i];
+            center_idx = i;
+        }
+    }
+
+    // Convert back to original string indices
+    // In transformed string, actual characters are at odd indices (1, 3, 5, ...)
+    // The center of the palindrome in original string:
+    //   start = (center_idx - max_radius) / 2
+    //   length = max_radius
+    // Why? Each original character occupies 2 positions in t (e.g., 'a' at #a#)
+    int start = (center_idx - max_radius) / 2;
+    std::string result = s.substr(start, max_radius);
+
+    std::cout << "Longest palindromic substring: \"" << result << "\"\n";
+    std::cout << "Manacher: O(n) time, O(n) space. Radius array: ";
+    for (int i = 1; i < n - 1; ++i) std::cout << p[i] << (i < n - 2 ? " " : "");
+    std::cout << "\n";
+}
+
+// ============================================================
+// Q25: Merge Intervals (In-Place)
+// ============================================================
+
+void question25() {
+    std::cout << "Enter the number of intervals: ";
+    int n;
+    std::cin >> n;
+    if (n <= 0) {
+        std::cout << "Invalid input: n must be > 0.\n";
+        return;
+    }
+    std::vector<std::pair<int, int>> intervals(n);
+    std::cout << "Enter the intervals (start end):\n";
+    for (int i = 0; i < n; ++i) {
+        auto &[start, end] = intervals[i];
+        std::cin >> start >> end;
+        if (start > end) std::swap(start, end);  // Normalize: ensure start <= end
+    }
+
+    // O(n log n) — sort dominates; cannot do better without range constraints
+    std::sort(intervals.begin(), intervals.end());
+
+    // In-place merge: write result into front of intervals, then resize
+    // O(1) extra space (vs O(n) with separate merged vector)
+    int write = 0;
+    for (int read = 1; read < n; ++read) {
+        if (intervals[read].first <= intervals[write].second) {
+            // Overlapping or touching — extend current interval's end
+            intervals[write].second = std::max(intervals[write].second, intervals[read].second);
+        } else {
+            // Disjoint — advance write pointer and copy
+            intervals[++write] = intervals[read];
+        }
+    }
+    intervals.resize(write + 1);
+
+    std::cout << "Merged intervals:\n";
+    for (const auto &[start, end] : intervals) {
+        std::cout << start << " " << end << '\n';
+    }
+}
+
+// ============================================================
+// Q26: Container With Most Water
+// ============================================================
+
+void question26() {
+    std::cout << "Enter the number of lines: ";
+    int n;
+    std::cin >> n;
+    if (n <= 1) {
+        std::cout << "Invalid input: n must be > 1.\n";
+        return;
+    }
+    std::vector<int> heights(n);
+    std::cout << "Enter the heights of the lines:\n";
+    for (int i = 0; i < n; ++i) {
+        std::cin >> heights[i];
+    }
+
+    // Two-pointer: start at both ends, move the shorter side inward.
+    // Correctness: discarding the shorter side is safe because any container
+    // using that line with an inner line has less width and no more height.
+    int left = 0, right = n - 1;
+    long long max_area = 0;  // long long: height * width can overflow int
+    while (left < right) {
+        long long height = std::min(heights[left], heights[right]);
+        long long width = right - left;
+        max_area = std::max(max_area, height * width);
+        if (heights[left] < heights[right]) {
+            ++left;
+        } else {
+            --right;
+        }
+    }
+
+    std::cout << "Maximum area: " << max_area << '\n';
+}
+
+// ============================================================
+// Q27: Group Anagrams
+// ============================================================
+
+void question27() {
+    std::cout << "Enter the number of strings: ";
+    int n;
+    std::cin >> n;
+    if (n <= 0) {
+        std::cout << "Invalid input: n must be > 0.\n";
+        return;
+    }
+    std::vector<std::string> strs(n);
+    std::cout << "Enter the strings:\n";
+    for (int i = 0; i < n; ++i) {
+        std::cin >> strs[i];
+    }
+
+    // Group anagrams using sorted string as key
+    // O(n k log k) time, where k is max string length (sorting each string)
+    // O(n k) space for groups
+    std::unordered_map<std::string, std::vector<std::string>> groups;
+    for (const auto &s : strs) {
+        std::string key = s;
+        std::sort(key.begin(), key.end());
+        groups[key].push_back(s);
+    }
+
+    std::cout << "Grouped anagrams:\n";
+    for (const auto &[key, group] : groups) {
+        for (const auto &s : group) {
+            std::cout << s << " ";
+        }
+        std::cout << '\n';
+    }
+}
+
+// ============================================================
+// Q28: Product of Array Except Self
+// ============================================================
+
+void question28() {
+    std::cout << "Enter the number of elements in the array: ";
+    int n;
+    std::cin >> n;
+    if (n <= 0) {
+        std::cout << "Invalid input: n must be > 0.\n";
+        return;
+    }
+    std::vector<int> nums(n);
+    std::cout << "Enter the elements:\n";
+    for (int i = 0; i < n; ++i) {
+        std::cin >> nums[i];
+    }
+
+    // Product of array except self without division
+    // O(n) time, O(1) extra space (output array doesn't count)
+    std::vector<long long> output(n, 1);
+    long long left_product = 1;
+    for (int i = 0; i < n; ++i) {
+        output[i] *= left_product;
+        left_product *= nums[i];
+    }
+    long long right_product = 1;
+    for (int i = n - 1; i >= 0; --i) {
+        output[i] *= right_product;
+        right_product *= nums[i];
+    }
+
+    std::cout << "Product of array except self:\n[";
+    for (size_t i = 0; i < output.size(); ++i) {
+        std::cout << output[i];
+        if (i < output.size() - 1) std::cout << ", ";
+    }
+    std::cout << "]\n";
+}
+
+// ============================================================
+// Q29: Rotate Array
+// ============================================================
+
+void question29() {
+    std::cout << "Enter the number of elements in the array: ";
+    int n;
+    std::cin >> n;
+    if (n <= 0) {
+        std::cout << "Invalid input: n must be > 0.\n";
+        return;
+    }
+    std::vector<int> nums(n);
+    std::cout << "Enter the elements:\n";
+    for (int i = 0; i < n; ++i) {
+        std::cin >> nums[i];
+    }
+    std::cout << "Enter the number of steps to rotate: ";
+    int k;
+    std::cin >> k;
+    k = ((k % n) + n) % n;  // Normalize: handles negative k and k >= n
+    if (k == 0) {
+        std::cout << "Array after rotation:\n[";
+        for (size_t i = 0; i < nums.size(); ++i) {
+            std::cout << nums[i];
+            if (i < nums.size() - 1) std::cout << ", ";
+        }
+        std::cout << "]\n";
+        return;
+    }
+
+    // Rotate right by k in-place via three reversals
+    // O(n) time, O(1) extra space
+    auto reverse = [&](int start, int end) {
+        while (start < end) {
+            std::swap(nums[start++], nums[end--]);
+        }
+    };
+
+    reverse(0, n - 1);       // Reverse entire array
+    reverse(0, k - 1);       // Reverse first k elements
+    reverse(k, n - 1);       // Reverse remaining n-k elements
+
+    std::cout << "Array after rotation:\n[";
+    for (size_t i = 0; i < nums.size(); ++i) {
+        std::cout << nums[i];
+        if (i < nums.size() - 1) std::cout << ", ";
+    }
+    std::cout << "]\n";
+}
+
+// ============================================================
+// Q30: Valid Sudoku
+// ============================================================
+
+void question30() {
+    // Valid Sudoku: validate 9×9 board using bit manipulation
+    // Each row, column, and 3×3 box uses an int as a 9-bit bitmask.
+    // Bit i (0-indexed) represents digit (i+1).
+    // Set bit: mask |= (1 << i), check duplicate: mask & (1 << i)
+
+    std::cout << "Enter 9 rows of the Sudoku board (digits 1-9, '.' for empty):\n";
+    std::vector<std::string> board(9);
+    for (int i = 0; i < 9; ++i) {
+        std::cin >> board[i];
+    }
+
+    int rows[9] = {}, cols[9] = {}, boxes[9] = {};
+
+    for (int r = 0; r < 9; ++r) {
+        for (int c = 0; c < 9; ++c) {
+            if (board[r][c] == '.') continue;
+            int bit = board[r][c] - '1';  // Map '1'-'9' to bit 0-8
+            int mask = 1 << bit;
+            int box = (r / 3) * 3 + (c / 3);  // Box index 0-8
+
+            if ((rows[r] | cols[c] | boxes[box]) & mask) {
+                // Bit already set — duplicate in row, column, or box
+                std::cout << "false (duplicate at row " << r + 1
+                          << ", col " << c + 1 << ")\n";
+                return;
+            }
+            rows[r] |= mask;
+            cols[c] |= mask;
+            boxes[box] |= mask;
+        }
+    }
+
+    std::cout << std::boolalpha << true << '\n';
+}   
 
 int main() {
     std::ios::sync_with_stdio(false);
     std::cin.tie(nullptr);
-
+    // Call the desired question function here, e.g.:
     // question1();
-    // question2();
-    // question3();
-    // question4();
-    // question5();
-    // question6();
-    // question7();
-    // question8();
-    // question9();
-    // question10();
-    // question11();
-    // question12();
-    // question13();
-    // question14();
-    // question15();
-    // question16();
-    // question17();
-    // question18();
-    // question19();
-    // question20();
-    // question21();
-    // question22();
-    question23();
 
     return 0;
 }
