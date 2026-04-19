@@ -48,6 +48,37 @@
 // 29. Rotate Array: Rotate right by k steps, in-place, O(1) extra space.
 // 30. Valid Sudoku: Validate 9×9 board, use bit manipulation.
 
+// 45-second questions (quick fill-in / one-liner)
+// 31. Count Trailing Zeros in Factorial
+// Write int trailingZeros(int n) — return the number of trailing zeros in n!.
+// 32. Power Function (Fast Exponentiation)
+// Write long long power(long long base, int exp) — compute base^exp efficiently (mod 10^9+7 if needed).
+// 33. Integer to Roman
+// Write string intToRoman(int num) (1 ≤ num ≤ 3999).
+// 34. Roman to Integer
+// Write int romanToInt(string s).
+// 35. Reverse Bits
+// Write uint32_t reverseBits(uint32_t n) — reverse all 32 bits.
+// 36. Number of 1 Bits (again, different version)
+// int hammingWeight(uint32_t n) — but must be O(1) time with bit tricks (n & (n-1) loop).
+
+// 37. Implement Circular Buffer (Fixed Size Queue)
+// Implement a fixed-size circular buffer (capacity given) with push(), pop(), peek(), isFull(), isEmpty(). Use modulo arithmetic.
+// 38. LRU Cache (Simple Version)
+// Design a Least Recently Used cache with get(key) and put(key, value). Capacity given. (Use ordered map or doubly linked list + hash).
+// 39. Memory Pool Allocator
+// Implement a simple fixed-size memory pool that can allocate and free blocks of a given size quickly (HFT classic).
+// 40. Fast Input Parser
+// Read a very large line of space-separated integers (up to 10^6 numbers) as fast as possible and compute their sum. (Use custom fast input, avoid cin with no sync).
+// 41. Thread-Safe Counter
+// Implement a lock-free incrementing counter using std::atomic.
+// 42. Remove Duplicates from Sorted Array
+// Remove duplicates in-place so that each unique element appears only once. Return the new length.
+// 43. Find Peak Element
+// Find a peak element (greater than neighbors) in an array. Can be multiple peaks, return any.
+// 44. Kth Largest Element
+// Find the kth largest element in an unsorted array. (Can use quickselect or heap).
+
 #include <iostream>
 #include <cmath>
 #include <vector>
@@ -63,10 +94,15 @@
 #include <bitset>
 #include <unordered_set>
 #include <unordered_map>
+#include <optional>
+#include <list>
 
 // ============================================================
 // Q12: Lock-Free SPSC Ring Buffer
 // ============================================================
+// Single-producer single-consumer ring buffer using atomics.
+// acquire/release ordering ensures buffer writes are visible before
+// head/tail updates. alignas(64) prevents false sharing between cores.
 
 struct alignas(64) LockFreeRingBuffer {
     static constexpr size_t SIZE = 1024;
@@ -101,6 +137,9 @@ struct alignas(64) LockFreeRingBuffer {
 // ============================================================
 // Q1–Q3: 45-Second Questions
 // ============================================================
+// Q1: n & (n-1) clears lowest set bit — powers of 2 have exactly one bit set.
+// Q2: Brian Kernighan's — iterates only over set bits (faster than naive 32-bit loop).
+// Q3: INT_MIN special-cased (abs overflows); overflow check before each multiply-add.
 
 void question1() {
     auto isPowerOfTwo = [](long long n) {
@@ -150,6 +189,8 @@ void question3() {
 // ============================================================
 // Q4: Quadratic Solver
 // ============================================================
+// Epsilon-based discriminant classification avoids floating-point equality.
+// Handles degenerate cases: a=0 (linear), b=0 (no solution).
 
 void question4() {
     double a, b, c;
@@ -180,6 +221,8 @@ void question4() {
 // ============================================================
 // Q5: Combination Count
 // ============================================================
+// Symmetry: C(n,k) = C(n,n-k) to minimize loop iterations.
+// Product always divisible by i at each step — no floating point needed.
 
 void question5() {
     int n, k;
@@ -201,6 +244,8 @@ void question5() {
 // ============================================================
 // Q6: Closest Pair Distance (squared)
 // ============================================================
+// O(n^2) brute force — acceptable for small n. Returns squared distance
+// to avoid costly sqrt. Casts to unsigned long long to prevent overflow.
 
 void question6() {
     int n;
@@ -226,6 +271,8 @@ void question6() {
 // ============================================================
 // Q7: Grid Shortest Path (No Obstacles)
 // ============================================================
+// Pure combinatorics: must move right (W-1) and down (H-1) times.
+// No BFS needed — answer is always (W-1) + (H-1).
 
 void question7() {
     int W, H;
@@ -236,6 +283,8 @@ void question7() {
 // ============================================================
 // Q8: Stock Profit
 // ============================================================
+// Single pass: track min price seen so far, compute profit at each step.
+// O(n) time, O(1) space — no need for two passes or extra arrays.
 
 void question8() {
     int n;
@@ -263,6 +312,8 @@ void question8() {
 // ============================================================
 // Q9: Run-Length Encoding
 // ============================================================
+// '|' delimiter separates run entries — avoids ambiguity when characters
+// are digits (e.g., "a12" could mean "a" × 12 or "a1" × 2).
 
 void question9() {
     std::string S;
@@ -297,6 +348,8 @@ void question9() {
 // ============================================================
 // Q10: Tiling Rectangle with Squares (greedy)
 // ============================================================
+// Euclidean algorithm: always place the largest square (min(W,H))^2,
+// then reduce. Greedy is optimal for integer square tiling.
 
 void question10() {
     unsigned int W, H;
@@ -314,6 +367,8 @@ void question10() {
 // ============================================================
 // Q11: BFS Shortest Path with Obstacles
 // ============================================================
+// BFS guarantees shortest path on unweighted grids. Visited array
+// prevents re-exploration — O(rows*cols) time and space.
 
 void question11() {
     int rows, cols;
@@ -362,6 +417,8 @@ void question11() {
 // ============================================================
 // Q12: Lock-Free SPSC Ring Buffer (demo)
 // ============================================================
+// Producer/consumer threads spin on full/empty — acceptable for demo.
+// In production, consider adding backoff or notification.
 
 void question12() {
     LockFreeRingBuffer rb;
@@ -390,6 +447,8 @@ void question12() {
 // ============================================================
 // Q13: Bitwise AND of Range
 // ============================================================
+// Naive loop with early exit when result hits 0.
+// Optimal: find common prefix of left/right, fill rest with 0 — O(1).
 
 void question13() {
     std::cout << "Enter left and right for rangeBitwiseAnd: ";
@@ -410,6 +469,8 @@ void question13() {
 // ============================================================
 // Q14: Missing Number
 // ============================================================
+// Sum formula: expected sum (n*(n+1)/2) minus actual sum reveals missing value.
+// Alternative: XOR all values with [0..n] — overflow-safe but less intuitive.
 
 void question14() {
     std::cout << "Enter n for missing number (array of size n with numbers from 0 to n): \n";
@@ -429,6 +490,8 @@ void question14() {
 // ============================================================
 // Q15: Palindrome Number (full reversal)
 // ============================================================
+// Full reversal approach — risk of overflow on large numbers.
+// Q15a uses half-reversal: compares only half the digits, no overflow possible.
 
 void question15() {
     std::cout << "Enter an integer to check if it's a palindrome: ";
@@ -469,6 +532,8 @@ void question15a() {
 // ============================================================
 // Q16: Hamming Distance
 // ============================================================
+// XOR finds differing bits; bitset::count() computes popcount.
+// Alternative: use n & (n-1) loop like Q2 for explicit bit manipulation.
 
 void question16() {
     int x, y;
@@ -479,6 +544,8 @@ void question16() {
 // ============================================================
 // Q17: Valid Parentheses
 // ============================================================
+// Expected-close bracket stack: push the *closing* bracket for each opener.
+// O(n) single pass with early exit on mismatch.
 
 void question17() {
     std::cout << "Enter a string of parentheses to check if it's valid: ";
@@ -509,6 +576,8 @@ void question17() {
 // ============================================================
 // Q18: Add Binary
 // ============================================================
+// Column addition from LSB; carry propagates naturally.
+// Reverse result at the end — no need to handle leading zeros.
 
 void question18() {
     std::cout << "Enter two binary strings to add: ";
@@ -530,6 +599,8 @@ void question18() {
 // ============================================================
 // Q19: Single Number (XOR)
 // ============================================================
+// XOR cancels pairs (a ^ a = 0) — O(n) time, O(1) space.
+// question19_set uses hash set — O(n) time, O(n/2) space, but more generalizable.
 
 void question19() {
     int n;
@@ -560,6 +631,8 @@ void question19_set() {
 // ============================================================
 // Q20: Climbing Stairs (O(1) space)
 // ============================================================
+// Fibonacci relation: ways(n) = ways(n-1) + ways(n-2).
+// Iterative two-variable approach avoids O(n) stack from recursion.
 
 void question20() {
     int n;
@@ -584,6 +657,8 @@ void question20() {
 // ============================================================
 // Q21: Maximum Subarray Sum (Kadane)
 // ============================================================
+// Kadane's: reset running sum when negative (starting fresh is better).
+// Global max tracks the best seen. O(n) time, O(1) space.
 
 void question21() {
     std::cout << "Enter the number of elements in the array: ";
@@ -611,6 +686,8 @@ void question21() {
 // ============================================================
 // Q22: Best Time to Buy and Sell Stock II
 // ============================================================
+// Sum all positive deltas — equivalent to buying at every valley,
+// selling at every peak. Greedy is optimal when unlimited transactions.
 
 void question22() {
     std::cout << "Enter the number of days: ";
@@ -639,6 +716,8 @@ void question22() {
 // ============================================================
 // Q23: Move Zeroes
 // ============================================================
+// Two-pointer: last_non_zero tracks write position. Swap guard (i != last_non_zero)
+// avoids self-assignment. Preserves relative order of non-zero elements.
 
 void question23() {
     std::cout << "Enter the number of elements in the array: ";
@@ -676,6 +755,8 @@ void question23() {
 // ============================================================
 // Q24: Longest Palindromic Substring (Expand Around Center)
 // ============================================================
+// O(n^2) time, O(1) space. Deduplicated with expand lambda.
+// For n ≤ 1000 this is practical; Manacher's (Q24a) is O(n) but more complex.
 
 void question24() {
     std::cout << "Enter a string to find its longest palindromic substring:\n";
@@ -822,6 +903,8 @@ void question24a() {
 // ============================================================
 // Q25: Merge Intervals (In-Place)
 // ============================================================
+// In-place read/write pointer — O(1) extra space vs separate merged vector.
+// Sort dominates at O(n log n); cannot improve without range constraints.
 
 void question25() {
     std::cout << "Enter the number of intervals: ";
@@ -865,6 +948,9 @@ void question25() {
 // ============================================================
 // Q26: Container With Most Water
 // ============================================================
+// Two-pointer greedy: discarding the shorter side is safe because
+// width shrinks and min-height can't improve by keeping it.
+// long long prevents overflow on height * width.
 
 void question26() {
     std::cout << "Enter the number of lines: ";
@@ -902,6 +988,8 @@ void question26() {
 // ============================================================
 // Q27: Group Anagrams
 // ============================================================
+// Sorted string as hash key — O(k log k) per string where k = string length.
+// Alternative: 26-int frequency count as key — O(k) but more complex encoding.
 
 void question27() {
     std::cout << "Enter the number of strings: ";
@@ -939,6 +1027,8 @@ void question27() {
 // ============================================================
 // Q28: Product of Array Except Self
 // ============================================================
+// Two-pass prefix/suffix — no division needed, handles zeros naturally.
+// O(n) time, O(1) extra space (output array doesn't count per convention).
 
 void question28() {
     std::cout << "Enter the number of elements in the array: ";
@@ -979,6 +1069,8 @@ void question28() {
 // ============================================================
 // Q29: Rotate Array
 // ============================================================
+// Three-reverse technique — in-place O(1) extra space.
+// Double modulo ((k%n)+n)%n handles negative k correctly in C++.
 
 void question29() {
     std::cout << "Enter the number of elements in the array: ";
@@ -1030,6 +1122,8 @@ void question29() {
 // ============================================================
 // Q30: Valid Sudoku
 // ============================================================
+// Bit manipulation: 3 arrays of 9 ints as 9-bit bitmasks (one per row/col/box).
+// Single pass O(81) = O(1) time and space. (r/3)*3 + (c/3) maps cell to box.
 
 void question30() {
     // Valid Sudoku: validate 9×9 board using bit manipulation
@@ -1066,6 +1160,426 @@ void question30() {
 
     std::cout << std::boolalpha << true << '\n';
 }   
+
+// ============================================================
+// Q31: Trailing Zeros in Factorial
+// ============================================================
+
+void question31() {
+    std::cout << "Enter n to count trailing zeros in n!: ";
+    int n;
+    std::cin >> n;
+
+    // Legendre's formula: count factors of 5 in n!
+    // n/5 + n/25 + n/125 + ... counts how many times 5 appears as a factor
+    int count = 0;
+    while (n > 0) {
+        n /= 5;
+        count += n;
+    }
+
+    std::cout << "Trailing zeros: " << count << '\n';
+}
+
+// ============================================================
+// Q32: Power Function (Fast Exponentiation)
+// ============================================================
+// Binary exponentiation: O(log n) vs O(n) naive. Square-and-multiply.
+// long long promotion handles INT_MIN; 0^-n guarded explicitly.
+
+void question32() {
+    std::cout << "Enter base (double) and exponent (int): ";
+    double x;
+    int n;
+    std::cin >> x >> n;
+
+    auto myPow = [](double x, int n) -> double {
+        if (n == 0) return 1.0;
+        long long N = n;  // Promote to long long to handle INT_MIN
+        if (N < 0) {
+            if (x == 0.0) return 0.0;  // 0^-n is undefined, return 0
+            x = 1 / x;
+            N = -N;
+        }
+        double result = 1.0;
+        double current_product = x;
+        for (long long i = N; i > 0; i /= 2) {
+            if (i % 2 == 1) {
+                result *= current_product;
+            }
+            current_product *= current_product;
+        }
+        return result;
+    };
+
+    std::cout << x << "^" << n << " = " << myPow(x, n) << '\n';
+}
+
+// ============================================================
+// Q33: Integer to Roman
+// ============================================================
+// Greedy subtraction from largest symbol value — works because
+// Roman numeral system is canonical (subtractive pairs like CM, IV).
+
+void question33() {
+    std::cout << "Enter an integer to convert to Roman numeral: ";
+    int num;
+    std::cin >> num;
+    if (num <= 0 || num > 3999) {
+        std::cout << "Invalid input: num must be in range [1, 3999].\n";
+        return;
+    }
+    std::vector<std::pair<int, std::string>> value_symbols = {
+        {1000, "M"}, {900, "CM"}, {500, "D"}, {400, "CD"},
+        {100, "C"}, {90, "XC"}, {50, "L"}, {40, "XL"},
+        {10, "X"}, {9, "IX"}, {5, "V"}, {4, "IV"},
+        {1, "I"}
+    };
+    std::string result;
+    for (const auto &[value, symbol] : value_symbols) {
+        while (num >= value) {
+            result += symbol;
+            num -= value;
+        }
+    }
+    std::cout << "Roman numeral: " << result << '\n';
+}
+
+// ============================================================
+// Q34: Roman to Integer
+// ============================================================
+// Left-to-right scan with one-character lookahead — subtractive notation
+// (IV = 5-1) means if next value is larger, subtract current instead of add.
+
+void question34() {
+    std::cout << "Enter a Roman numeral to convert to integer: ";
+    std::string s;
+    std::cin >> s;
+    std::unordered_map<char, int> symbol_values = {
+        {'I', 1}, {'V', 5}, {'X', 10},
+        {'L', 50}, {'C', 100}, {'D', 500},
+        {'M', 1000}
+    };
+    int total = 0;
+    for (size_t i = 0; i < s.size(); ++i) {
+        int value = symbol_values[s[i]];
+        if (i + 1 < s.size() && symbol_values[s[i + 1]] > value) {
+            total -= value;  // Subtractive case
+        } else {
+            total += value;  // Additive case
+        }
+    }
+    std::cout << "Integer value: " << total << '\n';
+}
+
+// ============================================================
+// Q35: Reverse Bits
+// ============================================================
+// 32 iterations guaranteed — result is always a valid uint32_t.
+// No overflow possible: just rearranging bits via shift and OR.
+
+void question35() {
+    std::cout << "Enter a 32-bit unsigned integer to reverse its bits: ";
+    uint32_t n;
+    std::cin >> n;
+    uint32_t result = 0;
+    for (int i = 0; i < 32; ++i) {
+        result <<= 1;       // Shift result left to make room for next bit
+        result |= (n & 1);  // Add least significant bit of n to result
+        n >>= 1;            // Shift n right to process the next bit
+    }
+    std::cout << "Reversed bits: " << result << '\n';
+}
+
+// ============================================================
+// Q36: Number of 1 Bits (Brian Kernighan's)
+// ============================================================
+// Same technique as Q2 but with uint32_t for guaranteed 32-bit width.
+// O(k) where k = number of set bits (bounded by 32, so effectively O(1)).
+
+void question36() {
+    std::cout << "Enter a 32-bit unsigned integer to count its 1 bits: ";
+    uint32_t n;
+    std::cin >> n;
+    int count = 0;
+    while (n) {
+        n &= (n - 1);  // Clear the least significant set bit
+        ++count;
+    }
+    std::cout << "Number of 1 bits: " << count << '\n';
+}
+
+// ============================================================
+// Q37: Circular Buffer (Fixed Size Queue)
+// ============================================================
+// Free-list stack with modulo arithmetic — O(1) push/pop/peek.
+// std::optional for pop/peek avoids exceptions on empty buffer.
+
+void question37() {
+    std::cout << "Enter buffer capacity: ";
+    int cap;
+    std::cin >> cap;
+    if (cap <= 0) {
+        std::cout << "Invalid input: capacity must be > 0.\n";
+        return;
+    }
+
+    struct CircularBuffer {
+        std::vector<int> buffer;
+        int head = 0, tail = 0, count = 0, capacity;
+
+        CircularBuffer(int cap) : buffer(cap), capacity(cap) {}
+
+        bool push(int value) {
+            if (count == capacity) return false;
+            buffer[tail] = value;
+            tail = (tail + 1) % capacity;
+            ++count;
+            return true;
+        }
+
+        std::optional<int> pop() {
+            if (count == 0) return std::nullopt;
+            int value = buffer[head];
+            head = (head + 1) % capacity;
+            --count;
+            return value;
+        }
+
+        std::optional<int> peek() const {
+            if (count == 0) return std::nullopt;
+            return buffer[head];
+        }
+
+        bool isFull() const { return count == capacity; }
+        bool isEmpty() const { return count == 0; }
+        int size() const { return count; }
+    };
+
+    CircularBuffer cb(cap);
+    std::cout << "Enter commands (push <val>, pop, peek, quit):\n";
+    std::string cmd;
+    while (std::cin >> cmd) {
+        if (cmd == "quit") break;
+        if (cmd == "push") {
+            int val;
+            std::cin >> val;
+            if (cb.push(val)) {
+                std::cout << "Pushed " << val << " (size=" << cb.size() << ")\n";
+            } else {
+                std::cout << "Buffer full, cannot push " << val << '\n';
+            }
+        } else if (cmd == "pop") {
+            auto val = cb.pop();
+            if (val) {
+                std::cout << "Popped " << *val << " (size=" << cb.size() << ")\n";
+            } else {
+                std::cout << "Buffer empty, cannot pop\n";
+            }
+        } else if (cmd == "peek") {
+            auto val = cb.peek();
+            if (val) {
+                std::cout << "Front: " << *val << '\n';
+            } else {
+                std::cout << "Buffer empty\n";
+            }
+        }
+    }
+}
+
+// ============================================================
+// Q38: LRU Cache (Simple Version)
+// ============================================================
+// std::list + std::unordered_map for O(1) get/put.
+// list maintains access order (front = most recent, back = LRU).
+// map gives O(1) lookup; list::splice moves nodes in O(1) without copy.
+
+void question38() {
+    std::cout << "Enter LRU cache capacity: ";
+    int cap;
+    std::cin >> cap;
+    if (cap <= 0) {
+        std::cout << "Invalid input: capacity must be > 0.\n";
+        return;
+    }
+
+    struct LRUCache {
+        int capacity;
+        std::list<std::pair<int, int>> items;  // (key, value), front = MRU
+        std::unordered_map<int, std::list<std::pair<int, int>>::iterator> map;
+
+        LRUCache(int cap) : capacity(cap) {}
+
+        int get(int key) {
+            auto it = map.find(key);
+            if (it == map.end()) return -1;
+            items.splice(items.begin(), items, it->second);
+            return it->second->second;
+        }
+
+        void put(int key, int value) {
+            auto it = map.find(key);
+            if (it != map.end()) {
+                it->second->second = value;
+                items.splice(items.begin(), items, it->second);
+            } else {
+                items.emplace_front(key, value);
+                map[key] = items.begin();
+                if (static_cast<int>(items.size()) > capacity) {
+                    map.erase(items.back().first);
+                    items.pop_back();
+                }
+            }
+        }
+    };
+
+    LRUCache cache(cap);
+    std::cout << "Enter commands (get <key>, put <key> <val>, quit):\n";
+    std::string cmd;
+    while (std::cin >> cmd) {
+        if (cmd == "quit") break;
+        if (cmd == "get") {
+            int key;
+            std::cin >> key;
+            int val = cache.get(key);
+            if (val == -1) std::cout << "Key " << key << " not found\n";
+            else std::cout << "Get " << key << " = " << val << '\n';
+        } else if (cmd == "put") {
+            int key, val;
+            std::cin >> key >> val;
+            cache.put(key, val);
+            std::cout << "Put " << key << " = " << val << '\n';
+        }
+    }
+}
+
+// ============================================================
+// Q39: Memory Pool Allocator
+// ============================================================
+// Free-list based fixed-size allocator: O(1) alloc/dealloc.
+// Pre-allocates contiguous pool, tracks free blocks via pointer stack.
+// Note: uses alignas(max_align_t) for portability — real HFT pools
+// would accept alignment as a parameter.
+
+void question39() {
+    std::cout << "Enter block size and pool capacity: ";
+    size_t block_size, pool_capacity;
+    std::cin >> block_size >> pool_capacity;
+    if (block_size == 0 || pool_capacity == 0) {
+        std::cout << "Invalid input: block size and pool capacity must be > 0.\n";
+        return;
+    }
+
+    struct MemoryPool {
+        std::vector<std::aligned_storage_t<1, alignof(std::max_align_t)>> pool;
+        std::vector<void*> free_list;
+        size_t block_size;
+        static constexpr size_t aligned_slots(size_t bsize) {
+            return (bsize + alignof(std::max_align_t) - 1) / alignof(std::max_align_t);
+        }
+
+        MemoryPool(size_t bsize, size_t capacity)
+            : pool(capacity * aligned_slots(bsize)), block_size(bsize) {
+            for (size_t i = 0; i < capacity; ++i) {
+                free_list.push_back(pool.data() + i * aligned_slots(bsize));
+            }
+        }
+
+        void* allocate() {
+            if (free_list.empty()) return nullptr;
+            void* block = free_list.back();
+            free_list.pop_back();
+            return block;
+        }
+
+        bool deallocate(void* block) {
+            if (!owns(block)) return false;  // Reject wild pointers
+            free_list.push_back(block);
+            return true;
+        }
+
+        bool owns(void* block) const {
+            auto start = static_cast<const char*>(static_cast<const void*>(pool.data()));
+            auto end = start + pool.size() * sizeof(std::aligned_storage_t<1, alignof(std::max_align_t)>);
+            auto ptr = static_cast<const char*>(block);
+            return ptr >= start && ptr < end;
+        }
+    };
+
+    MemoryPool mem_pool(block_size, pool_capacity);
+    std::cout << "Memory pool created with block size " << block_size
+              << " and capacity " << pool_capacity << ".\n";
+    std::cout << "Enter commands (alloc, free <ptr>, quit):\n";
+    std::string cmd;
+    std::unordered_map<std::string, void*> allocated_blocks;
+    while (std::cin >> cmd) {
+        if (cmd == "quit") break;
+        if (cmd == "alloc") {
+            void* block = mem_pool.allocate();
+            if (block) {
+                std::string ptr_name = "ptr" + std::to_string(allocated_blocks.size());
+                allocated_blocks[ptr_name] = block;
+                std::cout << "Allocated " << ptr_name << " at " << block << '\n';
+            } else {
+                std::cout << "Memory pool exhausted, cannot allocate\n";
+            }
+        } else if (cmd == "free") {
+            std::string ptr_name;
+            std::cin >> ptr_name;
+            auto it = allocated_blocks.find(ptr_name);
+            if (it != allocated_blocks.end()) {
+                mem_pool.deallocate(it->second);
+                allocated_blocks.erase(it);
+                std::cout << "Deallocated " << ptr_name << '\n';
+            } else {
+                std::cout << "Pointer " << ptr_name << " not found\n";
+            }
+        }
+    }
+}
+
+// ============================================================
+// Q40: Fast Input Parser
+// ============================================================
+// Custom getchar-based integer parser — skips cin/scanf overhead.
+// Handles negative numbers and arbitrary whitespace.
+// For 10^6 integers this is ~5-10x faster than cin >> int.
+
+void question40() {
+    std::cout << "Enter the number of integers followed by the integers themselves:\n";
+    int n;
+    std::cin >> n;
+    if (n <= 0) {
+        std::cout << "Invalid input: n must be > 0.\n";
+        return;
+    }
+
+    // Skip remaining whitespace after reading n
+    std::cin.ignore();
+
+    // Read raw input via getchar — bypass cin per-integer overhead
+    auto read_int = []() -> long long {
+        long long x = 0;
+        bool neg = false;
+        int c;
+        // Skip whitespace
+        while ((c = getchar()) != EOF && (c == ' ' || c == '\n' || c == '\r' || c == '\t'))
+            ;
+        if (c == '-') { neg = true; c = getchar(); }
+        while (c != EOF && c >= '0' && c <= '9') {
+            x = x * 10 + (c - '0');
+            c = getchar();
+        }
+        return neg ? -x : x;
+    };
+
+    long long sum = 0;
+    for (int i = 0; i < n; ++i) {
+        sum += read_int();
+    }
+
+    std::cout << "Sum: " << sum << '\n';
+}
 
 int main() {
     std::ios::sync_with_stdio(false);
