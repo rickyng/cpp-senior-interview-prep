@@ -166,6 +166,10 @@ void question2() {
     std::cout << countBits(x) << '\n';
 }
 
+// Q3: Full reversal with per-digit overflow check — works entirely in int-width arithmetic.
+// INT_MIN special-cased because abs(INT_MIN) is UB (|INT_MIN| > INT_MAX in two's complement).
+// Relevant when constrained to int-width accumulator (e.g., embedded systems).
+
 void question3() {
     auto reverseInteger = [](int x) -> int {
         if (x == std::numeric_limits<int>::min()) return 0;
@@ -184,6 +188,20 @@ void question3() {
     int x;
     std::cin >> x;
     std::cout << reverseInteger(x) << '\n';
+}
+
+// Q3a: Simplified — long long accumulator absorbs overflow; no abs/sign/INT_MIN needed.
+// C++ truncation-toward-zero makes n%10 carry sign naturally (e.g., -123%10 = -3).
+// Single range check at the end replaces per-digit overflow guard.
+// Trade-off: uses 8-byte accumulator instead of 4.
+
+void question3a() {
+    int x;
+    std::cin >> x;
+    long long rev = 0;
+    for (int n = x; n; n /= 10)
+        rev = rev * 10 + n % 10;
+    std::cout << (rev < INT_MIN || rev > INT_MAX ? 0 : rev) << '\n';
 }
 
 // ============================================================
@@ -221,8 +239,13 @@ void question4() {
 // ============================================================
 // Q5: Combination Count
 // ============================================================
-// Symmetry: C(n,k) = C(n,n-k) to minimize loop iterations.
-// Product always divisible by i at each step — no floating point needed.
+// Multiplicative form: C(n,k) = n/1 * (n-1)/2 * ... * (n-k+1)/k
+// Divisibility: product at step i is always a multiple of i!, so
+// integer division never truncates — no floating point needed.
+// Symmetry: C(n,k) = C(n,n-k) minimizes iterations (e.g. C(20,18) → C(20,2)).
+// Overflow: safe for n ≤ 20 since C(20,10) = 184756 fits in unsigned long long.
+// Why not factorials? 20! ≈ 2.4e18 barely fits ULLONG_MAX, and n!/(k!(n-k)!)
+// overflows at intermediate steps. Iterative product avoids that.
 
 void question5() {
     int n, k;
@@ -283,8 +306,9 @@ void question7() {
 // ============================================================
 // Q8: Stock Profit
 // ============================================================
-// Single pass: track min price seen so far, compute profit at each step.
-// O(n) time, O(1) space — no need for two passes or extra arrays.
+// Two-pass: stores all prices in vector, then scans for max profit.
+// O(n) time, O(n) space — useful if you need to inspect prices later
+// (e.g., return the buy/sell indices). Wasteful if only profit is needed.
 
 void question8() {
     int n;
@@ -309,11 +333,37 @@ void question8() {
     std::cout << max_profit << '\n';
 }
 
+// Q8a: Single-pass streaming — no vector needed, O(1) space.
+// Each price is used exactly once (compare to min, compute profit),
+// so there's no reason to store it. Read and process on the fly.
+
+void question8a() {
+    int n;
+    std::cin >> n;
+    if (n <= 1) {
+        std::cout << "0\n";
+        return;
+    }
+
+    int price;
+    std::cin >> price;
+    int min_price = price;
+    int max_profit = 0;
+    for (int i = 1; i < n; ++i) {
+        std::cin >> price;
+        min_price = std::min(min_price, price);
+        max_profit = std::max(max_profit, price - min_price);
+    }
+    std::cout << max_profit << '\n';
+}
+
 // ============================================================
 // Q9: Run-Length Encoding
 // ============================================================
-// '|' delimiter separates run entries — avoids ambiguity when characters
-// are digits (e.g., "a12" could mean "a" × 12 or "a1" × 2).
+// Fixed-width: each run is exactly <char><1-digit-count> (max 9 per run).
+// No delimiter needed — decoder simply reads 2 chars at a time.
+// Handles digits and any characters unambiguously. Runs >9 split into
+// multiple entries (e.g., 12 a's → "a9a3").
 
 void question9() {
     std::string S;
@@ -323,24 +373,17 @@ void question9() {
     for (size_t i = 0; i < S.size(); ) {
         char ch = S[i];
         size_t count = 1;
-        while (i + count < S.size() && S[i + count] == ch) {
+        while (i + count < S.size() && S[i + count] == ch && count < 9) {
             ++count;
         }
-        encoded += ch + std::to_string(count) + '|';
+        encoded += ch + std::to_string(count);
         i += count;
     }
     std::cout << encoded << '\n';
 
     std::string decoded;
-    for (size_t i = 0; i < encoded.size(); ) {
-        char ch = encoded[i];
-        size_t j = i + 1;
-        while (j < encoded.size() && std::isdigit(static_cast<unsigned char>(encoded[j]))) {
-            ++j;
-        }
-        int count = std::stoi(encoded.substr(i + 1, j - (i + 1)));
-        decoded += std::string(count, ch);
-        i = j + 1;
+    for (size_t i = 0; i + 1 < encoded.size(); i += 2) {
+        decoded += std::string(encoded[i + 1] - '0', encoded[i]);
     }
     std::cout << decoded << '\n';
 }
