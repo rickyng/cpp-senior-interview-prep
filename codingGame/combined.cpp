@@ -251,7 +251,7 @@ void question5() {
     int n, k;
     std::cin >> n >> k;
 
-    if (k < 0 || k > n) {
+    if (k < 0 || k > n || n < 0) {
         std::cout << "0\n";
         return;
     }
@@ -740,17 +740,16 @@ void question22() {
         std::cout << "Maximum profit: 0\n";
         return;
     }
-    std::vector<int> prices(n);
+    long long max_profit = 0;
+    int prev_price = 0;
     std::cout << "Enter the stock prices: ";
     for (int i = 0; i < n; ++i) {
-        std::cin >> prices[i];
-    }
-
-    long long max_profit = 0;
-    for (int i = 1; i < n; ++i) {
-        if (prices[i] > prices[i - 1]) {
-            max_profit += prices[i] - prices[i - 1];
+        int price;
+        std::cin >> price;
+        if (i > 0 && price > prev_price) {
+            max_profit += price - prev_price;
         }
+        prev_price = price;
     }
 
     std::cout << "Maximum profit: " << max_profit << '\n';
@@ -795,6 +794,35 @@ void question23() {
     std::cout << "]\n";
 }
 
+
+
+// Q23a: Separate copy + fill — clearer intent than interleaved zero-writes.
+// First compact non-zeros into front, then zero-fill the tail in one pass.
+
+void question23a() {
+    std::cout << "Enter the number of elements in the array: ";
+    int n;
+    std::cin >> n;
+    if (n <= 0) {
+        std::cout << "Invalid input: n must be > 0.\n";
+        return;
+    }
+    std::vector<int> nums(n);
+    std::cout << "Enter the elements: ";
+    int write = 0;
+    for (int i = 0; i < n; ++i) {
+        std::cin >> nums[write];
+        if (nums[write] != 0) ++write;
+    }
+    std::fill(nums.begin() + write, nums.end(), 0);
+
+    std::cout << "Array after moving zeroes: [";
+    for (size_t i = 0; i < nums.size(); ++i) {
+        std::cout << nums[i];
+        if (i < nums.size() - 1) std::cout << ", ";
+    }
+    std::cout << "]\n";
+}
 // ============================================================
 // Q24: Longest Palindromic Substring (Expand Around Center)
 // ============================================================
